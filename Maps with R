@@ -1,0 +1,53 @@
+library(ggmap)
+library(ggrepel)
+library(ggplot2)
+library (osmdata)
+# Get the bounding box for New Haven
+bbox <- getbb("New Haven")
+# Get the map using Google Maps API
+map <- get_map(location = bbox, 
+               source = "google",
+               zoom = 12, 
+               scale = 2,  # Use scale = 2 (valid value)
+               maptype = 'terrain',
+               color = 'color')
+# Plot the map
+ggmap(map)
+# Load Your Specific Coordinates  
+d<-read.delim("tree_locations.txt")
+head(d)
+studies <- data.frame(d)
+class(studies)
+studies <- st_as_sf(studies, 
+                    coords = c("lon", "lat"), 
+                    crs = 32618)
+#Modify the Map
+map <- get_googlemap(center = "New Haven", zoom = 13, scale = 4)
+ggmap(map)+ 
+  geom_point(data=d, aes(x=lon, y=lat,  colour=Species),size = 3) +
+  xlab("Longitude") + ylab("Latitude") 
+
+#Let draw specific Neighbourhood of New Haven with Specific Tree locations 
+
+
+w<-read.delim("tree_loc_Westville.txt") #Load data file with Tree location coordinates 
+head(w)
+
+westville_map <- get_map(location = "Westville, New Haven, CT", zoom = 15, maptype = "satellite")
+
+# Plot the map
+png("westvillesatplot.png", width = 25, height = 25, units = "cm",res = 300)
+ggmap(westville_map,alpha = .8)+ 
+  geom_point(data = w, aes(x = lon, y = lat, color = Species), size = 3) +
+  geom_text_repel(
+    data = w,
+    aes(x = lon, y = lat, label = Tree, color = Species, family = "bold"),  # Set font family to bold
+    size = 4,
+    box.padding = 0.5,
+    segment.color = NA,
+    max.overlaps = 20  # Increase the max.overlaps parameter
+  ) +
+  scale_color_manual(values = c("Red" = "red", "Norway" = "blue", "Sugar" = "green4")) +
+  xlab("Longitude") + ylab("Latitude")+
+  theme_map()
+dev.off()
